@@ -1301,8 +1301,8 @@ export default function App() {
             </div>
             <div>
               <div className="brand-title">
-                <h1>QuickShare</h1>
-                <span className="brand-pill">P2P QUANTUM</span>
+                <h1 style={{ fontSize: '1.6rem', background: 'linear-gradient(135deg, var(--neon-violet), var(--neon-cyan))', WebkitBackgroundClip: 'text', color: 'transparent' }}>QuickShare</h1>
+                <span className="brand-pill">v2.0 ORBITAL</span>
               </div>
               <p className="brand-tagline">Encrypted peer-to-peer file transfer engine</p>
             </div>
@@ -1512,7 +1512,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="active-pairing-box">
+                  <div className="active-pairing-box plasma-card">
                     <div className="qr-and-code-layout">
                       {/* Holographic QR with Zoom trigger */}
                       <div className="qr-capsule group" onClick={() => setQrModalOpen(true)} title="Click to expand QR code">
@@ -1532,7 +1532,7 @@ export default function App() {
                         {/* 6-Digit 3D Cyber Capsules */}
                         <div className={`pin-capsule-row ${codeFlipped ? 'flip-animation' : ''}`}>
                           {pairingCode.split('').map((digit, idx) => (
-                            <span key={idx} className="pin-digit-box">
+                            <span key={idx} className={`pin-digit-box digit-slot ${codeFlipped ? 'flip-animation' : ''}`}>
                               {digit}
                             </span>
                           ))}
@@ -1670,7 +1670,7 @@ export default function App() {
                   {/* Main Action Bar */}
                   <div className="transfer-action-bar">
                     <button
-                      className="glow-cta-btn"
+                      className={`glow-cta-btn ${transferState === 'sending' ? 'morphing' : ''}`}
                       onClick={sendSelectedFiles}
                       disabled={status !== 'connected' || pickedFiles.length === 0 || transferState === 'sending'}
                       type="button"
@@ -1919,7 +1919,7 @@ export default function App() {
                     </div>
 
                     <div className="linear-progress-bar">
-                      <div className="progress-fill" style={{ width: `${transferProgress.percent}%` }}>
+                      <div className="progress-fill liquid-fill" style={{ width: `${transferProgress.percent}%` }}>
                         <span className="fill-glow" />
                       </div>
                     </div>
@@ -1975,7 +1975,7 @@ export default function App() {
                   {receivedFiles.map((rf, idx) => {
                     const cat = getFileCategory(rf.type, rf.name);
                     return (
-                      <div className="received-card" key={`${rf.name}-${idx}`}>
+                      <div className={`received-card rf-accent-${cat.label.toLowerCase()}`} key={`${rf.name}-${idx}`}>
                         <div className="rf-icon" aria-hidden="true">
                           {cat.icon}
                         </div>
@@ -2021,7 +2021,7 @@ export default function App() {
               {history.length > 0 ? (
                 <div className="history-entries-list">
                   {history.map((item) => (
-                    <div className="history-entry-row" key={item.id}>
+                    <div className="history-entry-row" key={item.id} data-action={item.action}>
                       <span className={`entry-badge badge-${item.action}`}>
                         {item.action === 'sent' ? '↑ BEAMED' : '↓ RECEIVED'}
                       </span>
@@ -2052,7 +2052,7 @@ export default function App() {
             </div>
             <div className="modal-qr-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
             <div className="modal-footer">
-              <span className="font-mono text-cyan-300 font-bold text-lg">{pairingCode}</span>
+              <span className="digit-slot" style={{ width: 'auto', padding: '0 15px', height: '44px', fontSize: '1.4rem' }}>{pairingCode}</span>
               <button className="secondary-btn compact" onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Pairing link')}>
                 Copy Link
               </button>
