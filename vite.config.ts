@@ -160,7 +160,9 @@ const hasTrustedCertificate = fs.existsSync(trustedCertificate) && fs.existsSync
 export default defineConfig({
   plugins: [react(), ...(hasTrustedCertificate ? [] : [basicSsl()]), signalingPlugin()],
   server: {
-    host: true,
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
     ...(hasTrustedCertificate
       ? {
           https: {
