@@ -1,0 +1,11 @@
+{
+  "name": "QR File Sharing",
+  "short_name": "QR Share",
+  "description": "Private local file sharing with QR and pairing codes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07101f",
+  "theme_color": "#07101f",
+  "orientation": "any",
+  "icons": []
+}
