@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, isPairingCode } from '../_lib/sessionStore';
+import { getSession, isPairingCode, type PairingSession } from '../_lib/sessionStore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -12,7 +12,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Pairing code must contain six digits.' });
   }
 
-  const session = await getSession(code);
+  let session: PairingSession | null;
+  try {
+    session = await getSession(code);
+  } catch (error) {
+    console.error('Failed to load pairing session.', error);
+    return res.status(503).json({ error: 'Signaling storage is unavailable. Check the Redis environment variables.' });
+  }
+
   if (!session) {
     return res.status(404).json({ error: 'Pairing code is invalid or expired.' });
   }

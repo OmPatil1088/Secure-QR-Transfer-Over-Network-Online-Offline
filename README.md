@@ -56,6 +56,9 @@ UPSTASH_REDIS_REST_URL
 UPSTASH_REDIS_REST_TOKEN
 ```
 
+If the Vercel integration provides the equivalent `KV_REST_API_URL` and
+`KV_REST_API_TOKEN` names instead, the signaling API supports those names too.
+
 Redeploy after adding or changing these variables. They must be configured for the
 same Vercel environment used by the deployment (Production, Preview, or
 Development). Vercel serverless functions do not share in-memory state, so the

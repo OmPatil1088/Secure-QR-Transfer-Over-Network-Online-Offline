@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, isPairingCode, updateSession } from '../../_lib/sessionStore';
+import { getSession, isPairingCode, updateSession, type PairingSession } from '../../_lib/sessionStore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const code = String(req.query.code ?? '');
@@ -7,19 +7,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Pairing code must contain six digits.' });
   }
 
-  const session = await getSession(code);
+  let session: PairingSession | null;
+  try {
+    session = await getSession(code);
+  } catch (error) {
+    console.error('Failed to load pairing session.', error);
+    return res.status(503).json({ error: 'Signaling storage is unavailable. Check the Redis environment variables.' });
+  }
+
   if (!session) {
     return res.status(404).json({ error: 'Pairing code is invalid or expired.' });
   }
 
   if (req.method === 'POST') {
-    const body = req.body as { answer?: unknown };
-    if (!body.answer) {
+    const body = req.body as { answer?: unknown } | undefined;
+    if (!body || typeof body !== 'object' || !body.answer) {
       return res.status(400).json({ error: 'answer is required.' });
     }
 
     session.answer = body.answer;
-    await updateSession(session);
+    try {
+      await updateSession(session);
+    } catch (error) {
+      console.error('Failed to update pairing session.', error);
+      return res.status(503).json({ error: 'Signaling storage is unavailable. Check the Redis environment variables.' });
+    }
+
     return res.status(200).json({ ok: true });
   }
 

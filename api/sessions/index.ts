@@ -7,8 +7,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed.' });
   }
 
-  const body = req.body as { offer?: unknown; sessionId?: unknown; shareMode?: unknown };
-  if (!body.offer || typeof body.sessionId !== 'string' || typeof body.shareMode !== 'string') {
+  const body = req.body as { offer?: unknown; sessionId?: unknown; shareMode?: unknown } | undefined;
+  if (!body || typeof body !== 'object' || !body.offer || typeof body.sessionId !== 'string' || typeof body.shareMode !== 'string') {
     return res.status(400).json({ error: 'offer, sessionId, and shareMode are required.' });
   }
 
@@ -24,6 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     expiresAt: now + ttlSeconds * 1000,
   };
 
-  await saveSession(session);
+  try {
+    await saveSession(session);
+  } catch (error) {
+    console.error('Failed to save pairing session.', error);
+    return res.status(503).json({ error: 'Signaling storage is unavailable. Check the Redis environment variables.' });
+  }
+
   return res.status(201).json({ code, sessionId: session.sessionId, expiresAt: session.expiresAt });
 }
