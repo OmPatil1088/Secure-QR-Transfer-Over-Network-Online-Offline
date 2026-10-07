@@ -894,7 +894,16 @@ export default function App() {
       });
 
       if (!registrationResponse.ok) {
-        throw new Error('Signaling server unavailable. Start Vite dev server.');
+        let message = `Signaling server returned HTTP ${registrationResponse.status}.`;
+        try {
+          const errorBody = (await registrationResponse.json()) as { error?: unknown };
+          if (typeof errorBody.error === 'string' && errorBody.error) {
+            message = errorBody.error;
+          }
+        } catch {
+          // Keep the HTTP status when the deployment returns a non-JSON error page.
+        }
+        throw new Error(message);
       }
 
       const registration = (await registrationResponse.json()) as { code: string; expiresAt: number };

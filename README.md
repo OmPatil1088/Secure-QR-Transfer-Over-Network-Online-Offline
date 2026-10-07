@@ -56,6 +56,11 @@ UPSTASH_REDIS_REST_URL
 UPSTASH_REDIS_REST_TOKEN
 ```
 
+Redeploy after adding or changing these variables. They must be configured for the
+same Vercel environment used by the deployment (Production, Preview, or
+Development). Vercel serverless functions do not share in-memory state, so the
+Redis variables are required for pairing sessions to work reliably in production.
+
 Vercel uses the functions in `api/sessions`. File contents continue to move directly between browsers; Vercel only stores temporary offer/answer signaling data for ten minutes. Localhost uses the Vite middleware and does not require Redis.
 
 ## Online ICE configuration
