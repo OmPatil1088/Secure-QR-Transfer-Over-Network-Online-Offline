@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createPairingCode, saveSession, type PairingSession, ttlSeconds } from '../_lib/sessionStore';
+import { createPairingCode, saveSession, type PairingSession, ttlSeconds } from './_lib/sessionStore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'offer, sessionId, and shareMode are required.' });
   }
 
-  let code = createPairingCode();
+  const code = createPairingCode();
   const now = Date.now();
   const session: PairingSession = {
     code,
