@@ -913,12 +913,7 @@ export default function App() {
       });
 
       if (!registrationResponse.ok) {
-        setPairingCode('');
-        setPairingExpiresAt(null);
-        setStatus('waiting');
-        setStatusMessage('Signaling server unavailable. Share sender QR/payload and use Manual Paste on receiver.');
-        showToast('Code pairing unavailable; manual QR/payload mode enabled.');
-        return;
+        throw new Error('Signaling server unavailable. Start Vite dev server.');
       }
 
       const registration = (await registrationResponse.json()) as { code: string; expiresAt: number };
@@ -1537,7 +1532,7 @@ export default function App() {
             {/* SENDER VIEW */}
             {role === 'sender' && (
               <div className="view-container animate-fade">
-                {!offerText ? (
+                {!pairingCode ? (
                   <div className="start-pairing-box">
                     <div className="pairing-callout">
                       <h3>Instant Pairing Engine</h3>
@@ -1556,23 +1551,51 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="active-pairing-box plasma-card">
-                    {pairingCode ? (
-                      <div className="qr-and-code-layout">
-                        {/* Holographic QR with Zoom trigger */}
-                        <div className="qr-capsule group" onClick={() => setQrModalOpen(true)} title="Click to expand QR code">
-                          <div className="qr-laser-line" />
-                          <div className="qr-corner-bracket corner-tl" />
-                          <div className="qr-corner-bracket corner-tr" />
-                          <div className="qr-corner-bracket corner-bl" />
-                          <div className="qr-corner-bracket corner-br" />
-                          <div className="qr-svg-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
-                          <div className="qr-zoom-hint">Click to Zoom</div>
+                    <div className="qr-and-code-layout">
+                      {/* Holographic QR with Zoom trigger */}
+                      <div className="qr-capsule group" onClick={() => setQrModalOpen(true)} title="Click to expand QR code">
+                        <div className="qr-laser-line" />
+                        <div className="qr-corner-bracket corner-tl" />
+                        <div className="qr-corner-bracket corner-tr" />
+                        <div className="qr-corner-bracket corner-bl" />
+                        <div className="qr-corner-bracket corner-br" />
+                        <div className="qr-svg-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
+                        <div className="qr-zoom-hint">Click to Zoom</div>
+                      </div>
+
+                      {/* Code and Controls */}
+                      <div className="pairing-meta-column">
+                        <span className="section-eyebrow">PAIRING PIN CODE</span>
+
+                        {/* 6-Digit 3D Cyber Capsules */}
+                        <div className={`pin-capsule-row ${codeFlipped ? 'flip-animation' : ''}`}>
+                          {pairingCode.split('').map((digit, idx) => (
+                            <span key={idx} className={`pin-digit-box digit-slot ${codeFlipped ? 'flip-animation' : ''}`}>
+                              {digit}
+                            </span>
+                          ))}
                         </div>
 
-                        {/* Code and Controls */}
-                        <div className="pairing-meta-column">
-                          <span className="section-eyebrow">PAIRING PIN CODE</span>
+                        <div className="code-timer-row">
+                          {codeCountdown && (
+                            <span className="timer-badge">
+                              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <span>Expires in {codeCountdown}</span>
+                            </span>
+                          )}
+                          <button
+                            className="secondary-btn compact"
+                            onClick={() => copyToClipboard(pairingCode, 'Pairing code')}
+                            type="button"
+                          >
+                            {copiedState === 'Pairing code' ? '✓ Copied' : 'Copy Code'}
+                          </button>
+                        </div>
 
+<<<<<<< HEAD
                           {/* 6-Digit 3D Cyber Capsules */}
                           <div className={`pin-capsule-row ${codeFlipped ? 'flip-animation' : ''}`}>
                             {pairingCode.split('').map((digit, idx) => (
@@ -1614,37 +1637,22 @@ export default function App() {
                               Close Session
                             </button>
                           </div>
+=======
+                        <div className="quick-actions-row">
+                          <button
+                            className="secondary-btn compact"
+                            onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Direct pairing link')}
+                            type="button"
+                          >
+                            Copy Link
+                          </button>
+                          <button className="ghost-btn compact danger-text" onClick={resetConnection} type="button">
+                            Close Session
+                          </button>
+>>>>>>> parent of b229e14 (Handle signaling-server fallback for sender pairing)
                         </div>
                       </div>
-                    ) : (
-                      <div className="qr-and-code-layout">
-                        <div className="qr-capsule group" onClick={() => setQrModalOpen(true)} title="Click to expand QR code">
-                          <div className="qr-laser-line" />
-                          <div className="qr-corner-bracket corner-tl" />
-                          <div className="qr-corner-bracket corner-tr" />
-                          <div className="qr-corner-bracket corner-bl" />
-                          <div className="qr-corner-bracket corner-br" />
-                          <div className="qr-svg-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
-                          <div className="qr-zoom-hint">Click to Zoom</div>
-                        </div>
-                        <div className="pairing-meta-column">
-                          <span className="section-eyebrow">MANUAL SIGNAL PAYLOAD</span>
-                          <p className="field-hint">Server signaling is unavailable. Use receiver Manual Paste mode with this QR/payload.</p>
-                          <div className="quick-actions-row">
-                            <button
-                              className="secondary-btn compact"
-                              onClick={() => copyToClipboard(offerText, 'Offer payload')}
-                              type="button"
-                            >
-                              Copy Offer
-                            </button>
-                            <button className="ghost-btn compact danger-text" onClick={resetConnection} type="button">
-                              Close Session
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
@@ -2126,21 +2134,10 @@ export default function App() {
             </div>
             <div className="modal-qr-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
             <div className="modal-footer">
-              {pairingCode ? (
-                <>
-                  <span className="digit-slot" style={{ width: 'auto', padding: '0 15px', height: '44px', fontSize: '1.4rem' }}>{pairingCode}</span>
-                  <button className="secondary-btn compact" onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Pairing link')}>
-                    Copy Link
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span className="digit-slot" style={{ width: 'auto', padding: '0 15px', height: '44px', fontSize: '1rem' }}>Manual Offer</span>
-                  <button className="secondary-btn compact" onClick={() => copyToClipboard(offerText, 'Offer payload')}>
-                    Copy Payload
-                  </button>
-                </>
-              )}
+              <span className="digit-slot" style={{ width: 'auto', padding: '0 15px', height: '44px', fontSize: '1.4rem' }}>{pairingCode}</span>
+              <button className="secondary-btn compact" onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Pairing link')}>
+                Copy Link
+              </button>
             </div>
           </div>
         </div>
