@@ -904,6 +904,7 @@ button {
   perspective: 600px;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 .flip-animation .pin-digit-box { animation: flip-digit 0.55s ease forwards; }
 .pairing-code-text-fallback {
   font-family: var(--font-mono);
@@ -914,6 +915,8 @@ button {
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 =======
+=======
+>>>>>>> parent of eceb8c5 (New UI)
 
 @media (max-width: 640px) {
   .pin-capsule-row {
@@ -941,6 +944,9 @@ button {
   animation: flip-digit 0.55s ease forwards;
 }
 
+<<<<<<< HEAD
+>>>>>>> parent of eceb8c5 (New UI)
+=======
 >>>>>>> parent of eceb8c5 (New UI)
 @keyframes flip-digit {
   0% { transform: rotateY(0deg); opacity: 1; }
@@ -1851,6 +1857,7 @@ button {
     padding: 14px 12px 60px;
     gap: 14px;
   }
+<<<<<<< HEAD
 
   .site-header {
     padding: 12px 14px;
@@ -1873,11 +1880,37 @@ button {
 <<<<<<< HEAD
 =======
 
+=======
+
+  .site-header {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .panel-card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+>>>>>>> parent of eceb8c5 (New UI)
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+<<<<<<< HEAD
+}
+>>>>>>> parent of eceb8c5 (New UI)
+=======
 }
 >>>>>>> parent of eceb8c5 (New UI)
