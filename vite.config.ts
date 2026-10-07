@@ -12,6 +12,7 @@ type PairingSession = {
   offer: unknown;
   answer: unknown | null;
   shareMode: string;
+  networkMode: 'offline' | 'online';
   createdAt: number;
   expiresAt: number;
 };
@@ -71,8 +72,9 @@ function signalingPlugin() {
         try {
           if (req.method === 'POST' && url.pathname === '/api/sessions') {
             const body = await readJsonBody(req);
-            if (!body.offer || typeof body.sessionId !== 'string' || typeof body.shareMode !== 'string') {
-              sendJson(res, 400, { error: 'offer, sessionId, and shareMode are required.' });
+            const hasValidNetworkMode = body.networkMode === 'offline' || body.networkMode === 'online';
+            if (!body.offer || typeof body.sessionId !== 'string' || typeof body.shareMode !== 'string' || !hasValidNetworkMode) {
+              sendJson(res, 400, { error: 'offer, sessionId, shareMode, and networkMode are required.' });
               return;
             }
 
@@ -88,6 +90,7 @@ function signalingPlugin() {
               offer: body.offer,
               answer: null,
               shareMode: body.shareMode,
+              networkMode: body.networkMode,
               createdAt: now,
               expiresAt: now + pairingTtlMs,
             };
@@ -108,6 +111,7 @@ function signalingPlugin() {
               offer: session.offer,
               sessionId: session.sessionId,
               shareMode: session.shareMode,
+              networkMode: session.networkMode,
               expiresAt: session.expiresAt,
             });
             return;
