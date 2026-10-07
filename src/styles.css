@@ -676,6 +676,14 @@ button {
   transition: transform 0.4s;
 }
 .flip-animation .pin-digit-box { animation: flip-digit 0.55s ease forwards; }
+.pairing-code-text-fallback {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  color: var(--text-main);
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+}
 @keyframes flip-digit {
   0% { transform: rotateY(0deg); opacity: 1; }
   50% { transform: rotateY(90deg); opacity: 0.3; }
@@ -903,4 +911,3 @@ button {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
-

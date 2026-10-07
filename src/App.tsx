@@ -148,17 +148,36 @@ function waitForIceGatheringComplete(pc: RTCPeerConnection): Promise<void> {
 async function waitForBufferedRoom(channel: RTCDataChannel): Promise<void> {
   const HIGH_WATER_MARK = 8 * 1024 * 1024; // 8 MB
   const LOW_WATER_MARK = 2 * 1024 * 1024;  // 2 MB
+  const MAX_WAIT_MS = 7000;
 
   if (channel.bufferedAmount <= HIGH_WATER_MARK) {
     return;
   }
 
   await new Promise<void>((resolve) => {
+    if (channel.readyState !== 'open') {
+      resolve();
+      return;
+    }
+
     channel.bufferedAmountLowThreshold = LOW_WATER_MARK;
+
+    if (channel.bufferedAmount <= LOW_WATER_MARK) {
+      resolve();
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      channel.removeEventListener('bufferedamountlow', onLow);
+      resolve();
+    }, MAX_WAIT_MS);
+
     const onLow = () => {
+      window.clearTimeout(timeoutId);
       channel.removeEventListener('bufferedamountlow', onLow);
       resolve();
     };
+
     channel.addEventListener('bufferedamountlow', onLow);
   });
 }
@@ -567,11 +586,16 @@ export default function App() {
 
     channel.onmessage = async (event) => {
       if (typeof event.data === 'string') {
-        const message = JSON.parse(event.data) as
+        let message:
           | { type: 'file-start'; fileId: string; name: string; mime: string; size: number }
           | { type: 'file-end'; fileId: string }
           | { type: 'transfer-cancel'; fileId: string }
           | { type: 'close' };
+        try {
+          message = JSON.parse(event.data) as typeof message;
+        } catch {
+          return;
+        }
 
         if (message.type === 'file-start') {
           if (message.size > maxFileSizeBytes) {
@@ -1557,6 +1581,7 @@ export default function App() {
                               </span>
                             ))}
                           </div>
+                          <p className="pairing-code-text-fallback">{pairingCode}</p>
 
                           <div className="code-timer-row">
                             {codeCountdown && (
