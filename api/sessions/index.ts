@@ -21,6 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!body.offer || typeof body.sessionId !== 'string' || typeof body.shareMode !== 'string' || !hasValidNetworkMode) {
     return res.status(400).json({ error: 'offer, sessionId, shareMode, and networkMode are required.' });
   }
+  const networkMode = body.networkMode === 'online' ? 'online' : 'offline';
 
   let code: string;
   try {
@@ -35,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     offer: body.offer,
     answer: null,
     shareMode: body.shareMode,
-    networkMode: body.networkMode,
+    networkMode,
     createdAt: now,
     expiresAt: now + ttlSeconds * 1000,
   };

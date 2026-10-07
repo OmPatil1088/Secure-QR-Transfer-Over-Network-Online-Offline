@@ -77,6 +77,7 @@ function signalingPlugin() {
               sendJson(res, 400, { error: 'offer, sessionId, shareMode, and networkMode are required.' });
               return;
             }
+            const networkMode = body.networkMode === 'online' ? 'online' : 'offline';
 
             let code = createPairingCode();
             while (pairingSessions.has(code)) {
@@ -90,7 +91,7 @@ function signalingPlugin() {
               offer: body.offer,
               answer: null,
               shareMode: body.shareMode,
-              networkMode: body.networkMode,
+              networkMode,
               createdAt: now,
               expiresAt: now + pairingTtlMs,
             };
