@@ -1260,6 +1260,29 @@ export default function App() {
     }
   };
 
+  const downloadReceivedFile = (event: React.MouseEvent<HTMLAnchorElement>, file: ReceivedFile) => {
+    event.preventDefault();
+    playSound('click');
+
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isIosDevice) {
+      window.open(file.url, '_blank', 'noopener,noreferrer');
+      showToast('File opened. Use Share or Save to Files.');
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast(`Downloading ${file.name}`);
+  };
+
   const changeNetworkMode = (mode: NetworkMode) => {
     playSound('click');
     if (mode === networkMode) return;
@@ -2008,7 +2031,13 @@ export default function App() {
                           {rf.savedToDisk ? (
                             <span className="disk-badge">Saved to Disk</span>
                           ) : (
-                            <a className="download-btn-pill" href={rf.url} download={rf.name} title="Download file">
+                            <a
+                              className="download-btn-pill"
+                              href={rf.url}
+                              download={rf.name}
+                              onClick={(event) => downloadReceivedFile(event, rf)}
+                              title="Download file"
+                            >
                               Download
                             </a>
                           )}
