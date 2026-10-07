@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis';
+import type { Redis } from '@upstash/redis';
 
 export type PairingSession = {
   code: string;
@@ -14,16 +14,20 @@ const ttlSeconds = 10 * 60;
 const memorySessions = new Map<string, PairingSession>();
 let redis: Redis | null | undefined;
 
-function getRedis(): Redis | null {
+async function getRedis(): Promise<Redis | null> {
   if (redis !== undefined) {
     return redis;
   }
 
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
-  redis = redisUrl && redisToken
-    ? new Redis({ url: redisUrl, token: redisToken })
-    : null;
+  if (!redisUrl || !redisToken) {
+    redis = null;
+    return redis;
+  }
+
+  const { Redis: RedisClient } = await import('@upstash/redis');
+  redis = new RedisClient({ url: redisUrl, token: redisToken });
   return redis;
 }
 
@@ -36,7 +40,7 @@ export function isPairingCode(value: string): boolean {
 }
 
 export async function saveSession(session: PairingSession): Promise<void> {
-  const redisClient = getRedis();
+  const redisClient = await getRedis();
   if (redisClient) {
     await redisClient.set(`qrfs:session:${session.code}`, session, { ex: ttlSeconds });
     return;
@@ -46,7 +50,7 @@ export async function saveSession(session: PairingSession): Promise<void> {
 }
 
 export async function getSession(code: string): Promise<PairingSession | null> {
-  const redisClient = getRedis();
+  const redisClient = await getRedis();
   const session = redisClient
     ? await redisClient.get<PairingSession>(`qrfs:session:${code}`)
     : memorySessions.get(code) ?? null;
