@@ -67,7 +67,10 @@ body {
   background-color: var(--bg-base);
   color: var(--text-main);
   overflow-x: hidden;
+  overflow-y: auto;
 }
+
+html, body, #root { min-height: 100%; }
 
 button {
   cursor: pointer;
@@ -892,15 +895,33 @@ button {
    RESPONSIVE
    ===================================================================== */
 @media (max-width: 640px) {
-  .glass-shell { padding: 16px 14px 80px; gap: 16px; }
-  .site-header { padding: 14px 18px; border-radius: 18px; }
+  .glass-shell { width: 100%; padding: 16px 14px 96px; gap: 16px; }
+  .site-header { padding: 14px 18px; border-radius: 18px; flex-wrap: wrap; gap: 14px; }
+  .brand-group, .header-actions { min-width: 0; }
+  .brand-group { flex: 1 1 100%; }
+  .header-actions { width: 100%; justify-content: flex-end; }
   .brand-tagline { display: none; }
-  .panel-card { padding: 20px; border-radius: 22px; }
+  .panel-card { min-width: 0; padding: 20px; border-radius: 22px; }
   .metrics-grid { grid-template-columns: 1fr; }
   .pin-capsule-row { justify-content: center; }
   .code-timer-row, .quick-actions-row { justify-content: center; }
+  .status-banner { align-items: flex-start; padding: 12px 14px; gap: 10px; }
+  .status-banner > div:nth-child(2) { min-width: 0; flex: 1; }
+  .status-header-line { flex-wrap: wrap; }
+  .status-desc { white-space: normal; overflow: visible; }
+  .disconnect-btn { flex-shrink: 0; padding: 8px 12px; }
+  .active-pairing-box { padding: 18px 14px; }
+  .qr-capsule { width: min(210px, 78vw); height: min(210px, 78vw); }
+  .received-card { align-items: flex-start; flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .rf-info { flex: 1 1 calc(100% - 48px); min-width: 0; }
+  .rf-action { flex: 1 1 100%; padding-left: 48px; }
+  .download-btn-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 18px; }
+  .disk-badge { display: inline-flex; min-height: 32px; align-items: center; }
+  .interactive-dropzone { padding: 40px 18px; }
+  .transfer-action-bar { flex-wrap: wrap; }
+  .transfer-action-bar > * { flex: 1 1 100%; }
+  .floating-toast { right: 14px; bottom: 14px; left: 14px; justify-content: center; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
-
