@@ -905,6 +905,7 @@ button {
 }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 .flip-animation .pin-digit-box { animation: flip-digit 0.55s ease forwards; }
 .pairing-code-text-fallback {
   font-family: var(--font-mono);
@@ -915,6 +916,8 @@ button {
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 =======
+=======
+>>>>>>> parent of eceb8c5 (New UI)
 =======
 >>>>>>> parent of eceb8c5 (New UI)
 
@@ -945,6 +948,9 @@ button {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of eceb8c5 (New UI)
+=======
 >>>>>>> parent of eceb8c5 (New UI)
 =======
 >>>>>>> parent of eceb8c5 (New UI)
@@ -1858,6 +1864,7 @@ button {
     gap: 14px;
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   .site-header {
     padding: 12px 14px;
@@ -1881,6 +1888,8 @@ button {
 =======
 
 =======
+=======
+>>>>>>> parent of eceb8c5 (New UI)
 
   .site-header {
     padding: 12px 14px;
@@ -1901,6 +1910,9 @@ button {
   }
 }
 
+<<<<<<< HEAD
+>>>>>>> parent of eceb8c5 (New UI)
+=======
 >>>>>>> parent of eceb8c5 (New UI)
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1909,6 +1921,10 @@ button {
     transition-duration: 0.001ms !important;
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
+}
+>>>>>>> parent of eceb8c5 (New UI)
+=======
 }
 >>>>>>> parent of eceb8c5 (New UI)
 =======
