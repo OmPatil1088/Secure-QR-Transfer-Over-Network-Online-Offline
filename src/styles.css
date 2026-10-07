@@ -466,7 +466,7 @@ button {
   width: 8px; height: 8px; border-radius: 50%; background: var(--neon-violet); box-shadow: 0 0 10px var(--neon-violet);
 }
 
-.download-btn-pill { padding: 6px 16px; border-radius: 999px; background: var(--neon-violet); color: #fff; font-size: 0.85rem; font-weight: 600; text-decoration: none; box-shadow: 0 0 15px rgba(139,92,246,0.4); }
+.download-btn-pill { display: inline-flex; align-items: center; justify-content: center; border: 0; cursor: pointer; padding: 6px 16px; border-radius: 999px; background: var(--neon-violet); color: #fff; font: inherit; font-size: 0.85rem; font-weight: 600; text-decoration: none; box-shadow: 0 0 15px rgba(139,92,246,0.4); }
 
 .modal-card {
   background: var(--nebula-deep);

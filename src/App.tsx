@@ -2036,15 +2036,14 @@ export default function App() {
                           {rf.savedToDisk ? (
                             <span className="disk-badge">Saved to Disk</span>
                           ) : (
-                            <a
+                            <button
                               className="download-btn-pill"
-                              href={rf.url}
-                              download={rf.name}
-                              onClick={(event) => downloadReceivedFile(rf, event)}
+                              onClick={() => downloadReceivedFile(rf)}
+                              type="button"
                               title="Download file"
                             >
                               Download
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>
