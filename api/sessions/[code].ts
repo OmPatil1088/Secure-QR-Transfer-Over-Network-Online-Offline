@@ -21,7 +21,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     offer: session.offer,
     sessionId: session.sessionId,
     shareMode: session.shareMode,
-    networkMode: session.networkMode,
     expiresAt: session.expiresAt,
   });
 }

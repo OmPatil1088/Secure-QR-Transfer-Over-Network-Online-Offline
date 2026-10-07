@@ -16,7 +16,6 @@ type SignalPacket = {
   kind: 'offer' | 'answer';
   sessionId: string;
   shareMode: ShareMode;
-  networkMode?: NetworkMode;
   sdp: RTCSessionDescriptionInit;
 };
 
@@ -148,36 +147,17 @@ function waitForIceGatheringComplete(pc: RTCPeerConnection): Promise<void> {
 async function waitForBufferedRoom(channel: RTCDataChannel): Promise<void> {
   const HIGH_WATER_MARK = 8 * 1024 * 1024; // 8 MB
   const LOW_WATER_MARK = 2 * 1024 * 1024;  // 2 MB
-  const MAX_WAIT_MS = 7000;
 
   if (channel.bufferedAmount <= HIGH_WATER_MARK) {
     return;
   }
 
   await new Promise<void>((resolve) => {
-    if (channel.readyState !== 'open') {
-      resolve();
-      return;
-    }
-
     channel.bufferedAmountLowThreshold = LOW_WATER_MARK;
-
-    if (channel.bufferedAmount <= LOW_WATER_MARK) {
-      resolve();
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      channel.removeEventListener('bufferedamountlow', onLow);
-      resolve();
-    }, MAX_WAIT_MS);
-
     const onLow = () => {
-      window.clearTimeout(timeoutId);
       channel.removeEventListener('bufferedamountlow', onLow);
       resolve();
     };
-
     channel.addEventListener('bufferedamountlow', onLow);
   });
 }
@@ -586,16 +566,11 @@ export default function App() {
 
     channel.onmessage = async (event) => {
       if (typeof event.data === 'string') {
-        let message:
+        const message = JSON.parse(event.data) as
           | { type: 'file-start'; fileId: string; name: string; mime: string; size: number }
           | { type: 'file-end'; fileId: string }
           | { type: 'transfer-cancel'; fileId: string }
           | { type: 'close' };
-        try {
-          message = JSON.parse(event.data) as typeof message;
-        } catch {
-          return;
-        }
 
         if (message.type === 'file-start') {
           if (message.size > maxFileSizeBytes) {
@@ -893,7 +868,6 @@ export default function App() {
         kind: 'offer',
         sessionId: sessionToken,
         shareMode,
-        networkMode,
         sdp: localDescription,
       });
 
@@ -907,7 +881,6 @@ export default function App() {
         body: JSON.stringify({
           sessionId: sessionToken,
           shareMode,
-          networkMode,
           offer: localDescription,
         }),
       });
@@ -952,17 +925,11 @@ export default function App() {
     }
   };
 
-  const createReceiverAnswerFromSignal = async (signal: SignalPacket, viaCode = false, activePairingCode = pairingCode) => {
+  const createReceiverAnswerFromSignal = async (signal: SignalPacket, viaCode = false) => {
     if (signal.kind !== 'offer') throw new Error('Expected an offer payload.');
 
-    const resolvedNetworkMode: NetworkMode = signal.networkMode === 'online'
-      ? 'online'
-      : signal.networkMode === 'offline'
-        ? 'offline'
-        : networkMode;
-    setNetworkMode(resolvedNetworkMode);
     currentShareModeRef.current = signal.shareMode;
-    const pc = buildPeerConnection(resolvedNetworkMode);
+    const pc = buildPeerConnection(networkMode);
     peerRef.current = pc;
 
     pc.ondatachannel = (event) => {
@@ -994,7 +961,6 @@ export default function App() {
       kind: 'answer',
       sessionId: signal.sessionId,
       shareMode: signal.shareMode,
-      networkMode: resolvedNetworkMode,
       sdp: answerDescription,
     });
 
@@ -1002,7 +968,7 @@ export default function App() {
     setAnswerText(payload);
 
     if (viaCode) {
-      const response = await fetch(`/api/sessions/${activePairingCode}/answer`, {
+      const response = await fetch(`/api/sessions/${pairingCode}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer: answerDescription }),
@@ -1026,7 +992,6 @@ export default function App() {
       if (!/^\d{6}$/.test(normalizedCode)) throw new Error('Enter 6-digit code shown on sender.');
 
       closedRef.current = false;
-      setPairingCode(normalizedCode);
       setStatus('connecting');
       setStatusMessage(`Looking up session ${normalizedCode}...`);
 
@@ -1037,7 +1002,6 @@ export default function App() {
         offer: RTCSessionDescriptionInit;
         sessionId: string;
         shareMode: ShareMode;
-        networkMode?: NetworkMode;
         expiresAt: number;
       };
 
@@ -1047,11 +1011,9 @@ export default function App() {
           kind: 'offer',
           sessionId: data.sessionId,
           shareMode: data.shareMode,
-          networkMode: data.networkMode,
           sdp: data.offer,
         },
         true,
-        normalizedCode,
       );
     } catch (error) {
       playSound('error');
@@ -1339,8 +1301,8 @@ export default function App() {
             </div>
             <div>
               <div className="brand-title">
-                <h1>QuickShare</h1>
-                <span className="brand-pill">P2P QUANTUM</span>
+                <h1 style={{ fontSize: '1.6rem', background: 'linear-gradient(135deg, var(--neon-violet), var(--neon-cyan))', WebkitBackgroundClip: 'text', color: 'transparent' }}>QuickShare</h1>
+                <span className="brand-pill">v2.0 ORBITAL</span>
               </div>
               <p className="brand-tagline">Encrypted peer-to-peer file transfer engine</p>
             </div>
@@ -1550,7 +1512,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="active-pairing-box">
+                  <div className="active-pairing-box plasma-card">
                     <div className="qr-and-code-layout">
                       {/* Holographic QR with Zoom trigger */}
                       <div className="qr-capsule group" onClick={() => setQrModalOpen(true)} title="Click to expand QR code">
@@ -1570,7 +1532,7 @@ export default function App() {
                         {/* 6-Digit 3D Cyber Capsules */}
                         <div className={`pin-capsule-row ${codeFlipped ? 'flip-animation' : ''}`}>
                           {pairingCode.split('').map((digit, idx) => (
-                            <span key={idx} className="pin-digit-box">
+                            <span key={idx} className={`pin-digit-box digit-slot ${codeFlipped ? 'flip-animation' : ''}`}>
                               {digit}
                             </span>
                           ))}
@@ -1595,49 +1557,6 @@ export default function App() {
                           </button>
                         </div>
 
-<<<<<<< HEAD
-                          {/* 6-Digit 3D Cyber Capsules */}
-                          <div className={`pin-capsule-row ${codeFlipped ? 'flip-animation' : ''}`}>
-                            {pairingCode.split('').map((digit, idx) => (
-                              <span key={idx} className={`pin-digit-box digit-slot ${codeFlipped ? 'flip-animation' : ''}`}>
-                                {digit}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="pairing-code-text-fallback">{pairingCode}</p>
-
-                          <div className="code-timer-row">
-                            {codeCountdown && (
-                              <span className="timer-badge">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <polyline points="12 6 12 12 16 14" />
-                                </svg>
-                                <span>Expires in {codeCountdown}</span>
-                              </span>
-                            )}
-                            <button
-                              className="secondary-btn compact"
-                              onClick={() => copyToClipboard(pairingCode, 'Pairing code')}
-                              type="button"
-                            >
-                              {copiedState === 'Pairing code' ? '✓ Copied' : 'Copy Code'}
-                            </button>
-                          </div>
-
-                          <div className="quick-actions-row">
-                            <button
-                              className="secondary-btn compact"
-                              onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Direct pairing link')}
-                              type="button"
-                            >
-                              Copy Link
-                            </button>
-                            <button className="ghost-btn compact danger-text" onClick={resetConnection} type="button">
-                              Close Session
-                            </button>
-                          </div>
-=======
                         <div className="quick-actions-row">
                           <button
                             className="secondary-btn compact"
@@ -1649,7 +1568,6 @@ export default function App() {
                           <button className="ghost-btn compact danger-text" onClick={resetConnection} type="button">
                             Close Session
                           </button>
->>>>>>> parent of b229e14 (Handle signaling-server fallback for sender pairing)
                         </div>
                       </div>
                     </div>
@@ -1752,7 +1670,7 @@ export default function App() {
                   {/* Main Action Bar */}
                   <div className="transfer-action-bar">
                     <button
-                      className="glow-cta-btn"
+                      className={`glow-cta-btn ${transferState === 'sending' ? 'morphing' : ''}`}
                       onClick={sendSelectedFiles}
                       disabled={status !== 'connected' || pickedFiles.length === 0 || transferState === 'sending'}
                       type="button"
@@ -2001,7 +1919,7 @@ export default function App() {
                     </div>
 
                     <div className="linear-progress-bar">
-                      <div className="progress-fill" style={{ width: `${transferProgress.percent}%` }}>
+                      <div className="progress-fill liquid-fill" style={{ width: `${transferProgress.percent}%` }}>
                         <span className="fill-glow" />
                       </div>
                     </div>
@@ -2057,7 +1975,7 @@ export default function App() {
                   {receivedFiles.map((rf, idx) => {
                     const cat = getFileCategory(rf.type, rf.name);
                     return (
-                      <div className="received-card" key={`${rf.name}-${idx}`}>
+                      <div className={`received-card rf-accent-${cat.label.toLowerCase()}`} key={`${rf.name}-${idx}`}>
                         <div className="rf-icon" aria-hidden="true">
                           {cat.icon}
                         </div>
@@ -2103,7 +2021,7 @@ export default function App() {
               {history.length > 0 ? (
                 <div className="history-entries-list">
                   {history.map((item) => (
-                    <div className="history-entry-row" key={item.id}>
+                    <div className="history-entry-row" key={item.id} data-action={item.action}>
                       <span className={`entry-badge badge-${item.action}`}>
                         {item.action === 'sent' ? '↑ BEAMED' : '↓ RECEIVED'}
                       </span>
@@ -2134,7 +2052,7 @@ export default function App() {
             </div>
             <div className="modal-qr-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
             <div className="modal-footer">
-              <span className="font-mono text-cyan-300 font-bold text-lg">{pairingCode}</span>
+              <span className="digit-slot" style={{ width: 'auto', padding: '0 15px', height: '44px', fontSize: '1.4rem' }}>{pairingCode}</span>
               <button className="secondary-btn compact" onClick={() => copyToClipboard(createPairingUrl(pairingCode), 'Pairing link')}>
                 Copy Link
               </button>
