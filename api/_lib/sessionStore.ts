@@ -12,11 +12,20 @@ export type PairingSession = {
 
 const ttlSeconds = 10 * 60;
 const memorySessions = new Map<string, PairingSession>();
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
-const redis = redisUrl && redisToken
-  ? new Redis({ url: redisUrl, token: redisToken })
-  : null;
+let redis: Redis | null | undefined;
+
+function getRedis(): Redis | null {
+  if (redis !== undefined) {
+    return redis;
+  }
+
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  redis = redisUrl && redisToken
+    ? new Redis({ url: redisUrl, token: redisToken })
+    : null;
+  return redis;
+}
 
 export function createPairingCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -27,8 +36,9 @@ export function isPairingCode(value: string): boolean {
 }
 
 export async function saveSession(session: PairingSession): Promise<void> {
-  if (redis) {
-    await redis.set(`qrfs:session:${session.code}`, session, { ex: ttlSeconds });
+  const redisClient = getRedis();
+  if (redisClient) {
+    await redisClient.set(`qrfs:session:${session.code}`, session, { ex: ttlSeconds });
     return;
   }
 
@@ -36,12 +46,13 @@ export async function saveSession(session: PairingSession): Promise<void> {
 }
 
 export async function getSession(code: string): Promise<PairingSession | null> {
-  const session = redis
-    ? await redis.get<PairingSession>(`qrfs:session:${code}`)
+  const redisClient = getRedis();
+  const session = redisClient
+    ? await redisClient.get<PairingSession>(`qrfs:session:${code}`)
     : memorySessions.get(code) ?? null;
 
   if (!session || session.expiresAt <= Date.now()) {
-    if (!redis) {
+    if (!redisClient) {
       memorySessions.delete(code);
     }
     return null;
