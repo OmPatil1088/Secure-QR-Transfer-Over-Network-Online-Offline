@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSession, isPairingCode, updateSession, type PairingSession } from '../../_lib/sessionStore';
+import { getSession, isPairingCode, updateSession, type PairingSession } from '../../_lib/sessionStore.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const code = String(req.query.code ?? '');
