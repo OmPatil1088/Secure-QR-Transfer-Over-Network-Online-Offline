@@ -630,17 +630,18 @@ export default function App() {
             receivedUrlsRef.current.push(url);
           }
 
-          setReceivedFiles((current) => [
-            {
-              name: incoming.name,
-              type: incoming.type,
-              size: incoming.size,
-              url,
-              receivedAt: new Date().toLocaleTimeString(),
-              savedToDisk,
-            },
-            ...current,
-          ]);
+          const receivedFile: ReceivedFile = {
+            name: incoming.name,
+            type: incoming.type,
+            size: incoming.size,
+            url,
+            receivedAt: new Date().toLocaleTimeString(),
+            savedToDisk,
+          };
+          setReceivedFiles((current) => [receivedFile, ...current]);
+          if (!savedToDisk) {
+            window.setTimeout(() => downloadReceivedFile(receivedFile), 0);
+          }
 
           addHistoryEntry('received', incoming.name, incoming.size);
           incomingRef.current = null;
@@ -1260,16 +1261,20 @@ export default function App() {
     }
   };
 
-  const downloadReceivedFile = (event: React.MouseEvent<HTMLAnchorElement>, file: ReceivedFile) => {
-    event.preventDefault();
+  const downloadReceivedFile = (file: ReceivedFile, event?: React.MouseEvent<HTMLAnchorElement>) => {
+    event?.preventDefault();
     playSound('click');
 
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if (isIosDevice) {
-      window.open(file.url, '_blank', 'noopener,noreferrer');
-      showToast('File opened. Use Share or Save to Files.');
+      const openedWindow = window.open(file.url, '_blank', 'noopener,noreferrer');
+      if (openedWindow) {
+        showToast('File opened. Use Share or Save to Files.');
+      } else {
+        showToast('Tap Download, then use Share or Save to Files.');
+      }
       return;
     }
 
@@ -2035,7 +2040,7 @@ export default function App() {
                               className="download-btn-pill"
                               href={rf.url}
                               download={rf.name}
-                              onClick={(event) => downloadReceivedFile(event, rf)}
+                              onClick={(event) => downloadReceivedFile(rf, event)}
                               title="Download file"
                             >
                               Download
