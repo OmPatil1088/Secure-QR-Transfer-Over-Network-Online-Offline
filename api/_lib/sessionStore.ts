@@ -6,6 +6,7 @@ export type PairingSession = {
   offer: unknown;
   answer: unknown | null;
   shareMode: string;
+  networkMode: 'offline' | 'online';
   createdAt: number;
   expiresAt: number;
 };

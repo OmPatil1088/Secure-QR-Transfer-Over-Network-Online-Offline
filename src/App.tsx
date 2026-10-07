@@ -16,6 +16,7 @@ type SignalPacket = {
   kind: 'offer' | 'answer';
   sessionId: string;
   shareMode: ShareMode;
+  networkMode?: NetworkMode;
   sdp: RTCSessionDescriptionInit;
 };
 
@@ -868,6 +869,7 @@ export default function App() {
         kind: 'offer',
         sessionId: sessionToken,
         shareMode,
+        networkMode,
         sdp: localDescription,
       });
 
@@ -881,6 +883,7 @@ export default function App() {
         body: JSON.stringify({
           sessionId: sessionToken,
           shareMode,
+          networkMode,
           offer: localDescription,
         }),
       });
@@ -930,11 +933,17 @@ export default function App() {
     }
   };
 
-  const createReceiverAnswerFromSignal = async (signal: SignalPacket, viaCode = false) => {
+  const createReceiverAnswerFromSignal = async (signal: SignalPacket, viaCode = false, activePairingCode = pairingCode) => {
     if (signal.kind !== 'offer') throw new Error('Expected an offer payload.');
 
+    const resolvedNetworkMode: NetworkMode = signal.networkMode === 'online'
+      ? 'online'
+      : signal.networkMode === 'offline'
+        ? 'offline'
+        : networkMode;
+    setNetworkMode(resolvedNetworkMode);
     currentShareModeRef.current = signal.shareMode;
-    const pc = buildPeerConnection(networkMode);
+    const pc = buildPeerConnection(resolvedNetworkMode);
     peerRef.current = pc;
 
     pc.ondatachannel = (event) => {
@@ -966,6 +975,7 @@ export default function App() {
       kind: 'answer',
       sessionId: signal.sessionId,
       shareMode: signal.shareMode,
+      networkMode: resolvedNetworkMode,
       sdp: answerDescription,
     });
 
@@ -973,7 +983,7 @@ export default function App() {
     setAnswerText(payload);
 
     if (viaCode) {
-      const response = await fetch(`/api/sessions/${pairingCode}/answer`, {
+      const response = await fetch(`/api/sessions/${activePairingCode}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer: answerDescription }),
@@ -997,6 +1007,7 @@ export default function App() {
       if (!/^\d{6}$/.test(normalizedCode)) throw new Error('Enter 6-digit code shown on sender.');
 
       closedRef.current = false;
+      setPairingCode(normalizedCode);
       setStatus('connecting');
       setStatusMessage(`Looking up session ${normalizedCode}...`);
 
@@ -1007,6 +1018,7 @@ export default function App() {
         offer: RTCSessionDescriptionInit;
         sessionId: string;
         shareMode: ShareMode;
+        networkMode?: NetworkMode;
         expiresAt: number;
       };
 
@@ -1016,9 +1028,11 @@ export default function App() {
           kind: 'offer',
           sessionId: data.sessionId,
           shareMode: data.shareMode,
+          networkMode: data.networkMode,
           sdp: data.offer,
         },
         true,
+        normalizedCode,
       );
     } catch (error) {
       playSound('error');
