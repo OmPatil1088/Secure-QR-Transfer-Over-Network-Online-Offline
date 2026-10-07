@@ -473,6 +473,14 @@ export default function App() {
     incomingRef.current = null;
     setIsIncomingActive(false);
     sessionStorage.removeItem('qrfs_session');
+    setSessionId('');
+    setOfferText('');
+    setAnswerText('');
+    setPendingSignalText('');
+    setPairingCode('');
+    setPairingExpiresAt(null);
+    setCodeCountdown('');
+    setQrModalOpen(false);
     setStatus('closed');
     setStatusMessage('Session closed. Ready to start a new transfer.');
   };
