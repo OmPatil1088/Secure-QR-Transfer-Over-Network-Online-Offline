@@ -96,11 +96,24 @@ function extractPairingCode(value: string): string | null {
   }
 }
 
-function buildPeerConnection(networkMode: NetworkMode): RTCPeerConnection {
+async function buildPeerConnection(networkMode: NetworkMode): Promise<RTCPeerConnection> {
   if (networkMode === 'offline') {
     return new RTCPeerConnection({ iceServers: [] });
   }
 
+  const meteredResponse = await fetch('/api/ice-servers');
+  if (!meteredResponse.ok) {
+    let message = `ICE server request failed with HTTP ${meteredResponse.status}.`;
+    try {
+      const body = (await meteredResponse.json()) as { error?: unknown };
+      if (typeof body.error === 'string' && body.error) message = body.error;
+    } catch {
+      // Keep the HTTP status when the deployment returns a non-JSON error page.
+    }
+    throw new Error(message);
+  }
+
+  const meteredIceServers = (await meteredResponse.json()) as RTCIceServer[];
   const configuredStunServers = import.meta.env.VITE_STUN_URLS
     ?.split(',')
     .map((url: string) => url.trim())
@@ -109,19 +122,10 @@ function buildPeerConnection(networkMode: NetworkMode): RTCPeerConnection {
     ? configuredStunServers
     : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
 
-  const iceServers: RTCIceServer[] = stunServers.map((url: string) => ({ urls: url }));
-  const turnUrls = import.meta.env.VITE_TURN_URLS
-    ?.split(',')
-    .map((url: string) => url.trim())
-    .filter(Boolean);
-  const configuredTurnUrls = turnUrls?.length ? turnUrls : import.meta.env.VITE_TURN_URL ? [import.meta.env.VITE_TURN_URL] : [];
-  if (configuredTurnUrls.length && import.meta.env.VITE_TURN_USERNAME && import.meta.env.VITE_TURN_CREDENTIAL) {
-    iceServers.push({
-      urls: configuredTurnUrls,
-      username: import.meta.env.VITE_TURN_USERNAME,
-      credential: import.meta.env.VITE_TURN_CREDENTIAL,
-    });
-  }
+  const iceServers: RTCIceServer[] = [
+    ...stunServers.map((url: string) => ({ urls: url })),
+    ...meteredIceServers,
+  ];
 
   return new RTCPeerConnection({ iceServers });
 }
@@ -852,7 +856,7 @@ export default function App() {
       setStatus('generating');
       setStatusMessage('Creating local WebRTC offer...');
 
-      const pc = buildPeerConnection(networkMode);
+      const pc = await buildPeerConnection(networkMode);
       peerRef.current = pc;
       const channel = pc.createDataChannel('qr-file-share');
       channel.binaryType = 'arraybuffer';
@@ -963,7 +967,7 @@ export default function App() {
     if (signal.kind !== 'offer') throw new Error('Expected an offer payload.');
 
     currentShareModeRef.current = signal.shareMode;
-    const pc = buildPeerConnection(networkMode);
+    const pc = await buildPeerConnection(networkMode);
     peerRef.current = pc;
 
     pc.ondatachannel = (event) => {
