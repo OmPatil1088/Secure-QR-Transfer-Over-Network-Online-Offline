@@ -517,9 +517,11 @@ export default function App() {
   }, [role]);
 
   const qrMarkup = useMemo(() => {
-    const text = role === 'sender' ? (pairingCode ? createPairingUrl(pairingCode) : offerText) : answerText;
+    // Answer SDP can exceed QR capacity once TURN candidates are included.
+    // Code pairing publishes it through the signaling API; manual paste uses clipboard.
+    const text = role === 'sender' && pairingCode ? createPairingUrl(pairingCode) : '';
     return text ? createQrSvg(text) : '';
-  }, [answerText, offerText, pairingCode, role]);
+  }, [pairingCode, role]);
 
   const setupSenderChannel = (channel: RTCDataChannel) => {
     channel.onopen = () => {
@@ -1906,9 +1908,9 @@ export default function App() {
 
                       {answerText && (
                         <div className="answer-result-box">
-                          <div className="qr-capsule small">
-                            <div className="qr-svg-holder" dangerouslySetInnerHTML={{ __html: qrMarkup }} />
-                          </div>
+                          <p className="field-hint">
+                            The answer is too large for a QR code with TURN enabled. Copy it and paste it into the sender window.
+                          </p>
                           <button className="secondary-btn" onClick={() => copyToClipboard(answerText, 'Answer payload')} type="button">
                             Copy Answer Payload
                           </button>
