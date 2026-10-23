@@ -107,12 +107,17 @@ function buildPeerConnection(networkMode: NetworkMode): RTCPeerConnection {
     .filter(Boolean);
   const stunServers = configuredStunServers?.length
     ? configuredStunServers
-    : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'];
+    : ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
 
-  const iceServers: RTCIceServer[] = [{ urls: stunServers }];
-  if (import.meta.env.VITE_TURN_URL && import.meta.env.VITE_TURN_USERNAME && import.meta.env.VITE_TURN_CREDENTIAL) {
+  const iceServers: RTCIceServer[] = stunServers.map((url: string) => ({ urls: url }));
+  const turnUrls = import.meta.env.VITE_TURN_URLS
+    ?.split(',')
+    .map((url: string) => url.trim())
+    .filter(Boolean);
+  const configuredTurnUrls = turnUrls?.length ? turnUrls : import.meta.env.VITE_TURN_URL ? [import.meta.env.VITE_TURN_URL] : [];
+  if (configuredTurnUrls.length && import.meta.env.VITE_TURN_USERNAME && import.meta.env.VITE_TURN_CREDENTIAL) {
     iceServers.push({
-      urls: import.meta.env.VITE_TURN_URL,
+      urls: configuredTurnUrls,
       username: import.meta.env.VITE_TURN_USERNAME,
       credential: import.meta.env.VITE_TURN_CREDENTIAL,
     });
@@ -130,7 +135,7 @@ function waitForIceGatheringComplete(pc: RTCPeerConnection): Promise<void> {
     const timeout = setTimeout(() => {
       pc.removeEventListener('icegatheringstatechange', onStateChange);
       resolve();
-    }, 2500);
+    }, 10000);
 
     const onStateChange = () => {
       if (pc.iceGatheringState === 'complete') {
