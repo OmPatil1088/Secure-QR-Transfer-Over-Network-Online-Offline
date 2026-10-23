@@ -201,7 +201,7 @@ export default function App() {
   const [role, setRole] = useState<Role>('sender');
   const [shareMode, setShareMode] = useState<ShareMode>('single');
   const [pairingMethod, setPairingMethod] = useState<PairingMethod>('code');
-  const [networkMode, setNetworkMode] = useState<NetworkMode>('offline');
+  const [networkMode, setNetworkMode] = useState<NetworkMode>('online');
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('Create a QR session or enter a 6-digit code to pair devices directly.');
   const [sessionId, setSessionId] = useState('');
@@ -281,7 +281,7 @@ export default function App() {
         setSessionId(data.sessionId || '');
         setRole(data.role || 'sender');
         setShareMode(data.shareMode || 'single');
-        setNetworkMode(data.networkMode || 'offline');
+        setNetworkMode(data.networkMode || 'online');
         setOfferText(data.offerText || '');
         setAnswerText(data.answerText || '');
         setPairingCode(data.pairingCode || '');
@@ -862,8 +862,15 @@ export default function App() {
           setConnectedAt(new Date().toLocaleTimeString());
           setStatusMessage('Peer connected! Drop or pick files below.');
         }
-        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-          setStatusMessage(`Connection ${pc.connectionState}.`);
+        if (pc.connectionState === 'failed') {
+          setStatus('error');
+          setStatusMessage(
+            networkMode === 'offline'
+              ? 'Connection failed. Both devices must be on the same local network, or switch to Online STUN.'
+              : 'Connection failed. Try Online STUN again, or configure a TURN server for restrictive networks.',
+          );
+        } else if (pc.connectionState === 'disconnected') {
+          setStatusMessage('Connection interrupted. Waiting for the peer to recover...');
         }
       };
 
@@ -943,7 +950,11 @@ export default function App() {
     }
   };
 
-  const createReceiverAnswerFromSignal = async (signal: SignalPacket, viaCode = false) => {
+  const createReceiverAnswerFromSignal = async (
+    signal: SignalPacket,
+    viaCode = false,
+    pairingCodeOverride?: string,
+  ) => {
     if (signal.kind !== 'offer') throw new Error('Expected an offer payload.');
 
     currentShareModeRef.current = signal.shareMode;
@@ -964,8 +975,15 @@ export default function App() {
         setConnectedAt(new Date().toLocaleTimeString());
         setStatusMessage('Direct P2P link established! Ready to receive files.');
       }
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        setStatusMessage(`Connection ${pc.connectionState}.`);
+      if (pc.connectionState === 'failed') {
+        setStatus('error');
+        setStatusMessage(
+          networkMode === 'offline'
+            ? 'Connection failed. Both devices must be on the same local network, or switch to Online STUN.'
+            : 'Connection failed. Try Online STUN again, or configure a TURN server for restrictive networks.',
+        );
+      } else if (pc.connectionState === 'disconnected') {
+        setStatusMessage('Connection interrupted. Waiting for the peer to recover...');
       }
     };
 
@@ -986,7 +1004,12 @@ export default function App() {
     setAnswerText(payload);
 
     if (viaCode) {
-      const response = await fetch(`/api/sessions/${pairingCode}/answer`, {
+      const code = pairingCodeOverride ?? pairingCode;
+      if (!/^\d{6}$/.test(code)) {
+        throw new Error('Pairing code is unavailable. Enter the code again and retry.');
+      }
+
+      const response = await fetch(`/api/sessions/${code}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer: answerDescription }),
@@ -1032,6 +1055,7 @@ export default function App() {
           sdp: data.offer,
         },
         true,
+        normalizedCode,
       );
     } catch (error) {
       playSound('error');

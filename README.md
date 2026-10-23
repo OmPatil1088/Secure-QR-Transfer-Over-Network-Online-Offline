@@ -28,6 +28,7 @@ Local-first file sharing app that pairs devices by QR code and transfers files d
 - A six-digit code is temporary convenience pairing, not strong authentication.
 - Use `Offline LAN` when both devices share the same local network and internet access is not desired.
 - Use `Online` when devices may be on different networks; this enables configured STUN servers and may require TURN for restrictive networks.
+- New sessions start in `Online` mode so the deployed app can connect devices on different networks; select `Local LAN` for a strictly local transfer.
 
 ## Warning-free Android HTTPS
 
